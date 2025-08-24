@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyTokenEdge } from "@/lib/auth-edge";
-import { verifyToken } from "./lib/auth";
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("auth-token")?.value;
@@ -30,7 +29,7 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const decoded = await verifyTokenEdge(token);
+    await verifyTokenEdge(token);
     return NextResponse.next();
   } catch (error) {
     // Invalid token
