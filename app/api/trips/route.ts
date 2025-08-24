@@ -17,7 +17,16 @@ export async function GET(request: NextRequest) {
     }
 
     const decoded = await verifyToken(token);
-    const userId = new ObjectId(decoded.userId);
+
+    // handle both string and buffer formats
+    let userId: ObjectId;
+    if (typeof decoded.userId === "string") {
+      userId = new ObjectId(decoded.userId);
+    } else if (decoded.userId?.buffer) {
+      userId = new ObjectId(Buffer.from(Object.values(decoded.userId.buffer)));
+    } else {
+      throw new Error("Invalid userId in token");
+    }
 
     const trips = await DatabaseService.getUserTrips(userId);
 

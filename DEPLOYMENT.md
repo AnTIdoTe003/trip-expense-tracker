@@ -17,8 +17,9 @@ You need to set these environment variables in your Vercel dashboard:
 
 ### Required Environment Variables:
 
-- `MONGODB_URI`: `mongodb+srv://viperbaledb:NXpnSMNb8l4uT6Hl@cluster0.uwdeuub.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
-- `JWT_SECRET`: `DBANDSOHELA123`
+- `MONGODB_URI`: ``
+- `JWT_SECRET`: ``
+-
 
 **Important**: Make sure to set these for all environments (Production, Preview, Development)
 
