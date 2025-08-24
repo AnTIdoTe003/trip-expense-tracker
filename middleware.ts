@@ -7,8 +7,19 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/login", "/signup"];
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/signup",
+    "/features",
+    "/how-it-works",
+    "/blog",
+  ];
   const isPublicRoute = publicRoutes.includes(pathname);
+
+  // SEO and static files that should be publicly accessible
+  const seoRoutes = ["/sitemap.xml", "/robots.txt", "/favicon.ico"];
+  const isSeoRoute = seoRoutes.some((route) => pathname === route);
 
   // API routes that don't require authentication
   const publicApiRoutes = ["/api/auth/login", "/api/auth/signup"];
@@ -16,8 +27,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(route)
   );
 
-  // If it's a public route or public API route, allow access
-  if (isPublicRoute || isPublicApiRoute) {
+  // If it's a public route, public API route, or SEO route, allow access
+  if (isPublicRoute || isPublicApiRoute || isSeoRoute) {
     return NextResponse.next();
   }
 
@@ -47,7 +58,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - sitemap.xml (sitemap)
+     * - robots.txt (robots file)
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };
