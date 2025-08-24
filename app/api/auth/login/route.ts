@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { DatabaseService } from "@/lib/database";
-import { generateToken, comparePassword } from "@/lib/auth";
+import { comparePassword, generateToken } from "@/lib/auth";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -35,22 +35,21 @@ export async function POST(request: NextRequest) {
     const { password: _, ...userWithoutPassword } = user;
     const token = await generateToken(userWithoutPassword);
 
+    // Set cookie
     const response = NextResponse.json({
       message: "Login successful",
       user: {
         id: user._id,
-        email: user.email,
         name: user.name,
+        email: user.email,
       },
     });
 
-    // Set HTTP-only cookie
     response.cookies.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 
     return response;
