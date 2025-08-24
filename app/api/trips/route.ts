@@ -17,8 +17,6 @@ export async function GET(request: NextRequest) {
     }
 
     const decoded = await verifyToken(token);
-
-    // handle both string and buffer formats
     let userId: ObjectId;
     if (typeof decoded.userId === "string") {
       userId = new ObjectId(decoded.userId);
@@ -48,7 +46,14 @@ export async function POST(request: NextRequest) {
     }
 
     const decoded = await verifyToken(token);
-    const userId = new ObjectId(decoded.userId);
+    let userId: ObjectId;
+    if (typeof decoded.userId === "string") {
+      userId = new ObjectId(decoded.userId);
+    } else if (decoded.userId?.buffer) {
+      userId = new ObjectId(Buffer.from(Object.values(decoded.userId.buffer)));
+    } else {
+      throw new Error("Invalid userId in token");
+    }
 
     const body = await request.json();
     const { name, description } = createTripSchema.parse(body);

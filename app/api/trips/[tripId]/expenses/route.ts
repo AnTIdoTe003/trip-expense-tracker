@@ -25,7 +25,14 @@ export async function GET(
     }
 
     const decoded = await verifyToken(token);
-    const userId = new ObjectId(decoded.userId);
+    let userId: ObjectId;
+    if (typeof decoded.userId === "string") {
+      userId = new ObjectId(decoded.userId);
+    } else if (decoded.userId?.buffer) {
+      userId = new ObjectId(Buffer.from(Object.values(decoded.userId.buffer)));
+    } else {
+      throw new Error("Invalid userId in token");
+    }
     const tripId = new ObjectId(params.tripId);
 
     // Verify user is member of trip
@@ -60,7 +67,14 @@ export async function POST(
     }
 
     const decoded = await verifyToken(token);
-    const userId = new ObjectId(decoded.userId);
+    let userId: ObjectId;
+    if (typeof decoded.userId === "string") {
+      userId = new ObjectId(decoded.userId);
+    } else if (decoded.userId?.buffer) {
+      userId = new ObjectId(Buffer.from(Object.values(decoded.userId.buffer)));
+    } else {
+      throw new Error("Invalid userId in token");
+    }
     const tripId = new ObjectId(params.tripId);
 
     // Verify user is member of trip
