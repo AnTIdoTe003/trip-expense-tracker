@@ -3,8 +3,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, FileText, Download } from "lucide-react"
+import { Loader2, FileText, Download, MessageCircle } from "lucide-react"
 import ReactMarkdown from "react-markdown"
+import { WhatsAppShareModal } from "./whatsapp-share-modal"
+import { formatForWhatsApp, truncateForWhatsApp, createWhatsAppShareUrl } from "@/lib/whatsapp-formatter"
 
 interface ExpenseSummaryProps {
   tripId: string
@@ -16,6 +18,7 @@ export function ExpenseSummary({ tripId, tripName }: ExpenseSummaryProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [showSummary, setShowSummary] = useState(false)
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false)
 
   const generateSummary = async () => {
     setError("")
@@ -56,6 +59,10 @@ export function ExpenseSummary({ tripId, tripName }: ExpenseSummaryProps) {
     URL.revokeObjectURL(url)
   }
 
+  const shareToWhatsApp = () => {
+    setShowWhatsAppModal(true)
+  }
+
   if (!showSummary) {
     return (
       <Card>
@@ -75,19 +82,24 @@ export function ExpenseSummary({ tripId, tripName }: ExpenseSummaryProps) {
             </Alert>
           )}
 
-          <Button onClick={generateSummary} disabled={loading} className="w-full">
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating Summary...
-              </>
-            ) : (
-              <>
-                <FileText className="h-4 w-4 mr-2" />
-                Generate AI Summary
-              </>
-            )}
-          </Button>
+          <div className="space-y-3">
+            <Button onClick={generateSummary} disabled={loading} className="w-full">
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating Summary...
+                </>
+              ) : (
+                <>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Generate AI Summary
+                </>
+              )}
+            </Button>
+            <p className="text-sm text-muted-foreground text-center">
+              💡 Once generated, you can share the summary directly to WhatsApp
+            </p>
+          </div>
         </CardContent>
       </Card>
     )
@@ -105,6 +117,10 @@ export function ExpenseSummary({ tripId, tripName }: ExpenseSummaryProps) {
             <CardDescription>Generated analysis of your trip expenses</CardDescription>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={shareToWhatsApp}>
+              <MessageCircle className="h-4 w-4 mr-2" />
+              WhatsApp
+            </Button>
             <Button variant="outline" size="sm" onClick={downloadSummary}>
               <Download className="h-4 w-4 mr-2" />
               Download
@@ -149,6 +165,13 @@ export function ExpenseSummary({ tripId, tripName }: ExpenseSummaryProps) {
           </Button>
         </div>
       </CardContent>
+
+      <WhatsAppShareModal
+        isOpen={showWhatsAppModal}
+        onClose={() => setShowWhatsAppModal(false)}
+        summary={summary}
+        tripName={tripName}
+      />
     </Card>
   )
 }
