@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,8 +18,23 @@ interface Member {
   email: string
 }
 
-interface ExpenseFormProps {
+interface Expense {
+  _id: string
+  amount: number
+  description: string
+  category: string
+  date: string
+  paidBy: string
+  splits: Array<{
+    userId: string
+    amount: number
+    settled: boolean
+  }>
+}
+
+interface EditExpenseFormProps {
   tripId: string
+  expense: Expense
   members: Member[]
   onSuccess: () => void
   onCancel: () => void
@@ -35,16 +50,37 @@ const expenseCategories = [
   "Other",
 ]
 
-export function ExpenseForm({ tripId, members, onSuccess, onCancel }: ExpenseFormProps) {
-  const [amount, setAmount] = useState("")
-  const [description, setDescription] = useState("")
-  const [category, setCategory] = useState("")
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0])
-  const [splitWith, setSplitWith] = useState<string[]>([])
+export function EditExpenseForm({ tripId, expense, members, onSuccess, onCancel }: EditExpenseFormProps) {
+  const [amount, setAmount] = useState(expense.amount.toString())
+  const [description, setDescription] = useState(expense.description)
+  const [category, setCategory] = useState(expense.category)
+  const [date, setDate] = useState(new Date(expense.date).toISOString().split("T")[0])
+  const [splitWith, setSplitWith] = useState<string[]>(expense.splits.map(s => s.userId))
   const [splitType, setSplitType] = useState<"equal" | "custom">("equal")
   const [customSplits, setCustomSplits] = useState<Record<string, number>>({})
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  // Initialize split type and custom splits based on existing expense
+  useEffect(() => {
+    const splits = expense.splits
+    const totalAmount = expense.amount
+    const equalSplit = totalAmount / splits.length
+
+    // Check if all splits are equal (within a small tolerance)
+    const isEqual = splits.every(split => Math.abs(split.amount - equalSplit) < 0.01)
+
+    if (isEqual) {
+      setSplitType("equal")
+    } else {
+      setSplitType("custom")
+      const customSplitsObj: Record<string, number> = {}
+      splits.forEach(split => {
+        customSplitsObj[split.userId] = split.amount
+      })
+      setCustomSplits(customSplitsObj)
+    }
+  }, [expense])
 
   const handleMemberToggle = (memberId: string, checked: boolean) => {
     if (checked) {
@@ -89,12 +125,12 @@ export function ExpenseForm({ tripId, members, onSuccess, onCancel }: ExpenseFor
       if (splitType === "custom") {
         const totalCustom = getTotalCustomSplit()
         if (Math.abs(totalCustom - numAmount) > 0.01) {
-          throw new Error(`Custom splits must add up to $${numAmount.toFixed(2)}`)
+          throw new Error(`Custom splits must add up to ${numAmount.toFixed(2)}`)
         }
       }
 
-      const response = await fetch(`/api/trips/${tripId}/expenses`, {
-        method: "POST",
+      const response = await fetch(`/api/trips/${tripId}/expenses/${expense._id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
@@ -111,12 +147,12 @@ export function ExpenseForm({ tripId, members, onSuccess, onCancel }: ExpenseFor
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create expense")
+        throw new Error(data.error || "Failed to update expense")
       }
 
       onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create expense")
+      setError(err instanceof Error ? err.message : "Failed to update expense")
     } finally {
       setLoading(false)
     }
@@ -125,7 +161,7 @@ export function ExpenseForm({ tripId, members, onSuccess, onCancel }: ExpenseFor
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add New Expense</CardTitle>
+        <CardTitle>Edit Expense</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -249,7 +285,7 @@ export function ExpenseForm({ tripId, members, onSuccess, onCancel }: ExpenseFor
 
           <div className="flex gap-2">
             <Button type="submit" disabled={loading}>
-              {loading ? "Adding..." : "Add Expense"}
+              {loading ? "Updating..." : "Update Expense"}
             </Button>
             <Button type="button" variant="outline" onClick={onCancel}>
               Cancel

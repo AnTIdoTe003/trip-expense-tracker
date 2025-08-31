@@ -266,7 +266,13 @@ export default function TripDetailsPage() {
                 <CardDescription>Track and manage trip expenses</CardDescription>
               </CardHeader>
               <CardContent>
-                <ExpenseList expenses={expenses} members={trip.members} currentUserId={user?.id || ""} />
+                <ExpenseList
+                  expenses={expenses}
+                  members={trip.members}
+                  currentUserId={user?.id || ""}
+                  tripId={params.tripId as string}
+                  onExpenseUpdate={fetchExpenses}
+                />
               </CardContent>
             </Card>
           </div>
